@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Medication Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- PWA support -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#003366">
+</head>
+<body>
+
+<div class="window">
+  <h1>Medication Tracker</h1>
+
+  <div class="form-box">
+    <input id="medName" placeholder="Medication name" />
+    <input id="pillCount" type="number" placeholder="Total pills in bottle" />
+    <input id="dailyDose" type="number" placeholder="Pills per day" />
+    <button onclick="addMed()">Add Medication</button>
+  </div>
+
+  <div id="medList"></div>
+</div>
+
+<script>
+let meds = JSON.parse(localStorage.getItem('meds')) || [];
+const LOW_PILL_THRESHOLD = 5;
+
+function saveMeds() {
+  localStorage.setItem('meds', JSON.stringify(meds));
+}
+
+function daysLeft(med) {
+  return Math.max(0, Math.floor(med.pills / med.perDay));
+}
+
+function takeDose(index) {
+  meds[index].pills -= meds[index].perDay;
+  if (meds[index].pills < 0) meds[index].pills = 0;
+  saveMeds();
+  render();
+}
+
+function addMed() {
+  const name = document.getElementById('medName').value.trim();
+  const pills = parseInt(document.getElementById('pillCount').value);
+  const perDay = parseInt(document.getElementById('dailyDose').value);
+
+  if (!name || !pills || !perDay) {
+    alert('Please fill in all fields');
+    return;
+  }
+
+  meds.push({ name, pills, perDay });
+  saveMeds();
+  render();
+
+  document.getElementById('medName').value = '';
+  document.getElementById('pillCount').value = '';
+  document.getElementById('dailyDose').value = '';
+}
+
+function render() {
+  const list = document.getElementById('medList');
+  list.innerHTML = '';
+
+  meds.forEach((med, index) => {
+    const div = document.createElement('div');
+    div.className = 'med-card';
+
+    const isLow = med.pills <= LOW_PILL_THRESHOLD;
+    const warningHTML = isLow ? `<div class="low-warning">⚠ Low supply – refill soon</div>` : '';
+
+    if (isLow) div.style.borderColor = 'red';
+
+    div.innerHTML = `
+      <div class="med-header">
+        <strong>${med.name}</strong>
+        <span>${daysLeft(med)} days left</span>
+      </div>
+      <div class="med-info">
+        Pills left: ${med.pills} · Daily dose: ${med.perDay}
+      </div>
+      ${warningHTML}
+      <button onclick="takeDose(${index})">Taken today</button>
+    `;
+
+    list.appendChild(div);
+  });
+}
+
+render();
+</script>
+
+<!-- Service Worker registration for PWA -->
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js')
+    .then(() => console.log('Service Worker registered'))
+    .catch(err => console.log('Service Worker failed:', err));
+}
+</script>
+
+</body>
+</html>
