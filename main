@@ -1,6 +1,7 @@
 your-repo/
 │
 ├─ index.html
-├─icon-192.png
+├─ icon-192.png
+├─ manifest.json
 ├─ sw.js
 └─style.css
