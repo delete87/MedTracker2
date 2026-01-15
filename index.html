@@ -1,28 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Medication Tracker</title>
-  <link rel="stylesheet" href="style.css" />
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <title>Medication Tracker</title>
+ <link rel="stylesheet" href="style.css" />
+ <link rel="manifest" href="manifest.json">
+ <meta name="theme-color" content="#003366">
+ <style>
+   /* Only adjusting delete button size */
+   .delete-btn {
+     position: absolute;
+     bottom: 6px;
+     right: 6px;
+     width: 28px;       /* smaller width */
+     height: 28px;      /* smaller height */
+     padding: 0;
+     font-weight: bold;
+     border: 2px solid #000;
+     border-radius: 0;
+     background: #eee;
+     text-align: center;
+     line-height: 24px; /* vertically center × */
+     cursor: pointer;
+     font-size: 16px;
+     transition: background 0.2s, color 0.2s;
+   }
 
-  <!-- PWA support -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#003366">
+   .delete-btn:hover {
+     background: #ddd;
+     color: red;
+   }
+
+   /* Keep med-card relative for positioning */
+   .med-card {
+     position: relative;
+   }
+ </style>
 </head>
 <body>
 
 <div class="window">
-  <h1>Medication Tracker</h1>
+ <h1>Medication Tracker</h1>
 
-  <div class="form-box">
-    <input id="medName" placeholder="Medication name" />
-    <input id="pillCount" type="number" placeholder="Total pills in bottle" />
-    <input id="dailyDose" type="number" placeholder="Pills per day" />
-    <button onclick="addMed()">Add Medication</button>
-  </div>
+ <div class="form-box">
+   <input id="medName" placeholder="Medication name" />
+   <input id="pillCount" type="number" placeholder="Total pills in bottle" />
+   <input id="dailyDose" type="number" placeholder="Pills per day" />
+   <button onclick="addMed()">Add Medication</button>
+ </div>
 
-  <div id="medList"></div>
+ <div id="medList"></div>
 </div>
 
 <script>
@@ -30,107 +58,77 @@ let meds = JSON.parse(localStorage.getItem('meds')) || [];
 const LOW_PILL_THRESHOLD = 5;
 
 function saveMeds() {
-  localStorage.setItem('meds', JSON.stringify(meds));
+ localStorage.setItem('meds', JSON.stringify(meds));
 }
 
 function daysLeft(med) {
-  return Math.max(0, Math.floor(med.pills / med.perDay));
+ return Math.max(0, Math.floor(med.pills / med.perDay));
 }
 
 function takeDose(index) {
-  meds[index].pills -= meds[index].perDay;
-  if (meds[index].pills < 0) meds[index].pills = 0;
-  saveMeds();
-  render();
+ meds[index].pills -= meds[index].perDay;
+ if (meds[index].pills < 0) meds[index].pills = 0;
+ saveMeds();
+ render();
 }
 
 function deleteMed(index) {
-  if (!confirm('Remove this medication?')) return;
-  meds.splice(index, 1);
-  saveMeds();
-  render();
+ if (!confirm('Remove this medication?')) return;
+ meds.splice(index, 1);
+ saveMeds();
+ render();
 }
 
 function addMed() {
-  const name = document.getElementById('medName').value.trim();
-  const pills = parseInt(document.getElementById('pillCount').value);
-  const perDay = parseInt(document.getElementById('dailyDose').value);
+ const name = document.getElementById('medName').value.trim();
+ const pills = parseInt(document.getElementById('pillCount').value);
+ const perDay = parseInt(document.getElementById('dailyDose').value);
 
-  if (!name || !pills || !perDay) {
-    alert('Please fill in all fields');
-    return;
-  }
+ if (!name || !pills || !perDay) {
+   alert('Please fill in all fields');
+   return;
+ }
 
-  meds.push({ name, pills, perDay });
-  saveMeds();
-  render();
+ meds.push({ name, pills, perDay });
+ saveMeds();
+ render();
 
-  document.getElementById('medName').value = '';
-  document.getElementById('pillCount').value = '';
-  document.getElementById('dailyDose').value = '';
+ document.getElementById('medName').value = '';
+ document.getElementById('pillCount').value = '';
+ document.getElementById('dailyDose').value = '';
 }
 
 function render() {
-  const list = document.getElementById('medList');
-  list.innerHTML = '';
+ const list = document.getElementById('medList');
+ list.innerHTML = '';
 
-  meds.forEach((med, index) => {
-    const div = document.createElement('div');
-    div.className = 'med-card';
-    div.style.position = 'relative';
+ meds.forEach((med, index) => {
+   const div = document.createElement('div');
+   div.className = 'med-card';
 
-    const isLow = med.pills <= LOW_PILL_THRESHOLD;
-    const warningHTML = isLow ? `<div class="low-warning">⚠ Low supply – refill soon</div>` : '';
+   const isLow = med.pills <= LOW_PILL_THRESHOLD;
+   const warningHTML = isLow ? `<div class="low-warning">⚠ Low supply – refill soon</div>` : '';
 
-    if (isLow) div.style.borderColor = 'red';
+   if (isLow) div.style.borderColor = 'red';
 
-    div.innerHTML = `
-      <div class="med-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <strong>${med.name}</strong>
-        <span>${daysLeft(med)} days left</span>
-      </div>
-      <div>Pills left: ${med.pills}</div>
-      <div>Pills per day: ${med.perDay}</div>
-      ${warningHTML}
+   div.innerHTML = `
+     <div class="med-header">
+       <strong>${med.name}</strong>
+       <span>${daysLeft(med)} days left</span>
+     </div>
+     <div class="med-info">
+       Pills left: ${med.pills} · Daily dose: ${med.perDay}
+     </div>
+     ${warningHTML}
+     <button onclick="takeDose(${index})">Taken today</button>
+     <button class="delete-btn" onclick="deleteMed(${index})">×</button>
+   `;
 
-      <button onclick="deleteMed(${index})"
-        style="position:absolute; bottom:6px; right:6px; border:none; background:#ccc; border-radius:50%; width:20px; height:20px; cursor:pointer; font-weight:bold;">×</button>
-    `;
-
-    list.appendChild(div);
-  });
+   list.appendChild(div);
+ });
 }
 
 render();
-</script>
-
-<!-- Service Worker registration (offline support) -->
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js')
-    .then(() => console.log('Service Worker registered (offline enabled)'))
-    .catch(err => console.log('Service Worker failed:', err));
-}
-
-// Manual install prompt handler
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-
-  const installBtn = document.createElement('button');
-  installBtn.textContent = 'Install App';
-  installBtn.style.marginTop = '10px';
-  installBtn.onclick = () => {
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.finally(() => {
-      deferredPrompt = null;
-      installBtn.remove();
-    });
-  };
-
-  document.body.appendChild(installBtn);
-});
 </script>
 
 </body>
