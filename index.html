@@ -102,6 +102,34 @@ if ('serviceWorker' in navigator) {
     .then(() => console.log('Service Worker registered'))
     .catch(err => console.log('Service Worker failed:', err));
 }
+
+// Handle install prompt manually
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault(); // prevent automatic prompt
+  deferredPrompt = e;
+  console.log('Install prompt available!');
+
+  // Show a temporary button to trigger install
+  const installBtn = document.createElement('button');
+  installBtn.textContent = 'Install App';
+  installBtn.style.marginTop = '10px';
+  installBtn.style.padding = '10px';
+  installBtn.style.fontSize = '16px';
+  installBtn.onclick = () => {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      } else {
+        console.log('User dismissed the install prompt');
+      }
+      deferredPrompt = null;
+      installBtn.remove(); // remove button after prompt
+    });
+  };
+  document.body.appendChild(installBtn);
+});
 </script>
 
 </body>
