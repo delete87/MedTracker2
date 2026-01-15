@@ -55,7 +55,7 @@
 
 <script>
 let meds = JSON.parse(localStorage.getItem('meds')) || [];
-const LOW_PILL_THRESHOLD = 5;
+const LOW_PILL_THRESHOLD = 10;
 
 function saveMeds() {
  localStorage.setItem('meds', JSON.stringify(meds));
