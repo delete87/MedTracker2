@@ -1,1 +1,6 @@
-index.html
+your-repo/
+│
+├─ index.html
+├─icon-192.png
+├─ sw.js
+└─style.css
